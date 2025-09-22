@@ -93,106 +93,52 @@ The ultimate all-in-one wireless exploitation & pentesting device.
 * Chaos flood mode (jam Wi-Fi, BT, NFC, Zigbee simultaneously)  
 
 ## Hardware
-* ESP32-S3 (UI + control)  
-* Pi Zero W (advanced pentest payloads + Linux tools)
-### Features + Hardware
+ESP32-S3 dev board (UI control, menus, touchscreen driver, NFC/IR/iButton handling, GPIO interface)
 
-* Touchscreen + D-pad + keypad (ESP32-S3 + TFT touchscreen + JR-KP-02 keypad)  
-* Swappable antennas (SMA connectors + switchable RF front-ends)  
-* Dual microSD slots (ESP32-S3 + Pi Zero W with SD)  
-* USB-C OTG host + device mode (ESP32-S3 native USB + Pi Zero W)  
-* GPIO / UART / JTAG header (ESP32-S3 pins, breakout header)  
-* Secure enclave chip (ATECC608A crypto co-processor)  
+Raspberry Pi Zero W / 2 W (Linux payload engine, runs Kali/PwnPi, handles Wi-Fi injection, Metasploit, bettercap, etc.)
 
-* Wi-Fi monitor mode (USB Wi-Fi dongle — Atheros AR9271 / MT76xx)  
-* Wi-Fi deauth floods (same as above)  
-* Evil twin AP cloning (Pi Zero W + hostapd-wpe)  
-* Karma-style rogue AP (Pi Zero W + hostapd-karma)  
-* Handshake capture + on-device cracking (AR9271 dongle + hcxdumptool + Pi Zero W)  
-* WPA3-Enterprise credential harvesting (evil twin downgrade via Pi + hostapd-wpe)  
-* Auto captive portal phishing (Pi Zero W webserver + hostapd)  
-* MITM proxy with SSL stripping + live injection (Pi Zero W + Bettercap/sslstrip)  
-* Multi-AP mesh cloning (Pi Zero W + multiple AR9271 dongles)  
-* Beacon flood / SSID spam (ESP32-S3 or AR9271 dongle)  
-* Deauth cannon (AR9271 dongle + Pi)  
-* Wi-Fi client hunting (Pi + Wireshark/hcxdumptool)  
-* Automatic credential replay (Pi + bettercap modules)  
+HackRF One (wideband SDR 1–6 GHz for replay, GPS spoofing, IMSI catcher, rolling code bypass, advanced RF chaos)
 
-* Bluetooth sniffing + packet injection (nRF52840 dongle + Pi)  
-* Bluetooth jamming / spam pairing flood (nRF52840 dongle)  
-* Fake AirPods / BT keyboard / BT mouse emulation (ESP32-S3 + BT HID firmware)  
-* Bluetooth HID injection (nRF52840 dongle in HID mode)  
-* BLE beacon spam (ESP32-S3 BLE stack)  
-* Bluetooth MITM (nRF52840 dongle + Pi + btlejack)  
+SIM7600 LTE module (SMS spoof, silent SMS tracking, LTE backhaul for exfiltration, remote control)
 
-* Sub-GHz wideband SDR capture (HackRF One / LimeSDR Mini)  
-* Rolling code capture / replay bypass (HackRF One + Pi + RF cracking software)  
-* Car fob panic button replay (CC1101 module / HackRF)  
-* RF fuzzing / brute force for IoT (CC1101 + ESP32-S3, or HackRF)  
-* Smart meter + pager decoding (HackRF / RTL-SDR dongle)  
-* Wireless thermostat / alarm / sensor spoofing (CC1101 / SX1262 LoRa)  
-* Drone hijack (HackRF + DJI protocol tools)  
-* TPMS spoofing (HackRF / CC1101)  
+PN532 NFC module (NFC read/write/emulate/relay, transit cards, access badges, fuzzing)
 
-* Cellular 2G/3G fake base station (HackRF + OpenBTS/YateBTS)  
-* 4G/5G passive sniffing (LimeSDR Mini + srsLTE)  
-* SMS interception + spoofing (SIM7600 LTE modem + AT commands)  
-* Silent SMS tracking (SIM7600 LTE modem)  
-* LTE data injection (SIM7600 + MITM proxies)  
+RDM6300 LF RFID module (125 kHz low-frequency RFID for HID/EM4100 badges)
 
-* NFC read/write/emulate/fuzz/relay (PN532 NFC module)  
-* RFID LF/HF read/write/emulate (PN532 + RDM6300 LF module)  
-* EMV chip read/write/emulate (ACS ACR1281 smartcard reader)  
-* Magstripe read/write/emulate (MSR605 clone board)  
-* IR record/replay/fuzz (ESP32-S3 GPIO + IR LED + IR photodiode)  
-* iButton read/write/emulate (DS1990 1-Wire module)  
+MSR605 clone magstripe reader/writer (magstripe card reading/writing/emulation)
 
-* USB Rubber Ducky++ (ESP32-S3 USB HID stack)  
-* USB MITM / proxy (Pi Zero W + USB OTG hub)  
-* BadUSB over Bluetooth / Wi-Fi (ESP32-S3 HID over BT/Wi-Fi)  
-* Keyboard / mouse hijack (Logitech Unifying dongle exploit + Pi)  
-* Drive-by HID payloads (ESP32-S3 BadUSB scripts)  
-* Mass BadUSB infection (Pi Zero W running USB attack scripts)  
+ACS ACR1281 smartcard module (ISO7816) (EMV chip read/write/emulation)
 
-* Multi-band RF jamming (HackRF + Wi-Fi dongle + nRF52840)  
-* Directional jamming (HackRF with directional antenna)  
-* Adaptive smart jammer (Pi Zero coordinating multiple radios)  
-* GPS jamming / spoofing (HackRF + active GPS antenna amp)  
+DS1990 iButton reader/emulator module (iButton/Dallas keys read/write/emulation)
 
-* Wireless wardriving (Pi Zero W + GPS module u-blox NEO-6M + AR9271 dongle)  
-* On-device Nmap / port scanner (Pi Zero W + nmap)  
-* Vulnerability scanner (Pi Zero W + OpenVAS or custom CVE scripts)  
-* Payload launcher (Pi Zero W + Metasploit)  
-* MITM on printers/projectors (Pi Zero W + bettercap)  
-* Scriptable automation (ESP32-S3 for macros, Pi Zero for scripts)  
-* Spectrum analyzer (HackRF / LimeSDR + Pi software)  
+IR LED + IR photodiode pair (IR signal capture + replay for TVs, ACs, projectors, office equipment)
 
-* MAC / IMEI randomization (Pi Zero W + network tools, SIM7600 AT commands)  
-* Payload encryption (ATECC608A secure element)  
-* Self-destruct / wipe mode (ESP32-S3 GPIO controlling SD erase circuit)  
-* Stealth OS mode (ESP32-S3 fake calculator/music player UI)  
-* Remote kill-switch (ESP32-S3 + SIM7600 SMS listener or NFC trigger)  
-* Fire-and-forget mode (ESP32-S3 autonomous script runner)  
-* Scheduled chaos mode (ESP32-S3 RTC alarm launching attacks)  
-* Mesh coordination (multiple ESP32-S3 units with LoRa SX1262)  
+CC1101 sub-GHz RF module (basic sub-GHz replay/fuzzing for garage doors, alarms, IoT devices)
 
-* Car CAN bus injection (MCP2515 CAN bus module via OBD-II adapter)  
-* Smart home hacking (CC2531 Zigbee USB stick, Z-Wave ZM5202 module)  
-* Voice assistant spoofing (HackRF / ESP32 Wi-Fi/Bluetooth emulation)  
-* Drone/UAV control via RF (HackRF + SDR-based hijack scripts)  
-* Satellite pager decoding (HackRF / LimeSDR + GNURadio)  
-* LoRaWAN exploitation (SX1276/SX1262 LoRa module + Pi)  
-* Badge cloning (PN532 + RDM6300)  
-* NFC relay attacks (ESP32-S3 + PN532 with dual readers)  
-* Mass badge wipe / corruption mode (PN532 firmware abuse)  
-* IoT camera hijack (Pi Zero + bettercap/rtsp tools)  
-* Auto-phish hotspot (Pi Zero + hostapd + phishing webserver)  
-* Credential exfil to cloud (SIM7600 LTE modem + Pi scripts)  
-* Mass network lockdown (Pi Zero + AR9271 Wi-Fi dongle + deauth flood)  
-* Printer takeover (Pi Zero + printer exploit scripts)  
-* Projector takeover (IR LED or network-based injection from Pi)  
-* OMG Cable style attacks (Pi Zero emulating HID over USB cable)  
-* Covert exfil (Pi Zero + SDR steganography or audio/image hiding)  
-* Silent stalker mode (HackRF in RX-only, ESP logs locally)  
-* Chaos flood mode (ESP32 + Pi coordinating all radios simultaneously)  
+SX1262 LoRa module (LoRa/LoRaWAN exploitation, extended sub-GHz communication, mesh networking)
 
+Atheros AR9271 or MT76xx Wi-Fi dongle (Wi-Fi monitor mode, injection, AP cloning, deauth floods)
+
+nRF52840 Bluetooth dongle (Bluetooth sniffing, MITM, HID injection, beacon spam, fuzzing)
+
+u-blox NEO-6M GPS module (GPS logging for wardriving, location tagging of captures)
+
+MCP2515 CAN bus module with OBD-II adapter (vehicle CAN bus injection, diagnostics spoofing)
+
+CC2531 Zigbee USB stick (smart home Zigbee exploitation)
+
+Z-Wave module (ZM5202) (smart home Z-Wave exploitation)
+
+ATECC608A secure element (payload encryption, secure key storage, tamper resistance)
+
+2.4–3.5″ TFT touchscreen (UI display for ESP32-S3)
+
+JR-KP-02 keypad + D-pad (physical control input)
+
+Dual microSD card slots (payload storage + logging, one for ESP, one for Pi)
+
+USB-C OTG hub (connects Pi Zero W to Wi-Fi dongles, SDR, LTE modem, magstripe reader, etc.)
+
+Li-ion battery 5000–8000 mAh + BMS (portable power supply, USB-C PD charging, power rails 5V + 3.3V)
+
+Case + SMA connectors + antenna kit (swappable antennas for sub-GHz, Wi-Fi, LTE, SDR)
