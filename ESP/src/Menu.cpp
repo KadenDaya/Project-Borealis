@@ -1,325 +1,286 @@
 #include "core/Menu.h"
+#include "core/WebServer.h"
 
-// Flipper Zero style colors
-#define BG_COLOR      BLACK
-#define HEADER_COLOR  ORANGE
-#define SELECT_COLOR  ORANGE
-#define TEXT_COLOR    WHITE
-#define BORDER_COLOR  0x7BEF  // Grey
-#define SCROLL_COLOR  ORANGE
-
-Menu::Menu(Display* disp, Touch* tch) {
+Menu::Menu(Display* disp, Touch* touch) {
     display = disp;
-    touch = tch;
     tft = display->getTFT();
-    
+    touchScreen = touch;
+    webUI = nullptr;
     selectedIndex = 0;
-    scrollOffset = 0;
-    maxVisibleItems = 9;  // More items fit with compact design
-    
-    rootMenu = nullptr;
-    currentMenu = nullptr;
+    currentState = MAIN_MENU;
 }
 
-Menu::~Menu() {
-    // Clean up menu structure (simplified - could be more thorough)
-    if (rootMenu) delete rootMenu;
+void Menu::init() {
+    Serial.println("[+] Menu initialized");
 }
 
-void Menu::start() {
-    Serial.println("[+] Flipper-style menu started");
-    buildMenuStructure();
-    currentMenu = rootMenu;
-    drawMenu();
+void Menu::setWebInterface(WebInterface* web) {
+    webUI = web;
 }
 
-void Menu::buildMenuStructure() {
-    rootMenu = new MenuItem("Main Menu", FOLDER);
+void Menu::showMainMenu() {
+    currentState = MAIN_MENU;
+    selectedIndex = 0;
     
-    // ========== WiFi Menu (ESP32 Marauder Clone) ==========
-    MenuItem* wifi = addFolder("WiFi");
+    tft->fillScreen(BLACK);
     
-    // Scan
-    MenuItem* scan = addFolder("Scan");
-    addSubmenu(scan, addAction("Scan APs", actionPlaceholder));
-    addSubmenu(scan, addAction("Scan Stations", actionPlaceholder));
-    addSubmenu(scan, addAction("Select AP", actionPlaceholder));
-    addSubmenu(scan, addAction("Select Station", actionPlaceholder));
-    addSubmenu(wifi, scan);
+    // Nicer header with colored bar
+    tft->fillRect(0, 0, 320, 25, CYAN);
+    tft->setTextColor(BLACK);
+    tft->setTextSize(2);
+    tft->setCursor(10, 6);
+    tft->print("PROJECT BOREALIS");
     
-    // Attack
-    MenuItem* attack = addFolder("Attack");
-    addSubmenu(attack, addAction("Deauth", actionPlaceholder));
-    addSubmenu(attack, addAction("Beacon", actionPlaceholder));
-    addSubmenu(attack, addAction("Probe", actionPlaceholder));
-    addSubmenu(attack, addAction("Rick Roll", actionPlaceholder));
-    addSubmenu(wifi, attack);
+    // Draw all menu items with better spacing
+    drawMenuItem(0, "WiFi", selectedIndex == 0);
+    drawMenuItem(1, "Bluetooth", selectedIndex == 1);
+    drawMenuItem(2, "13.56 MHz NFC", selectedIndex == 2);
+    drawMenuItem(3, "125 kHz RFID", selectedIndex == 3);
+    drawMenuItem(4, "WebUI", selectedIndex == 4);
     
-    // Sniff
-    MenuItem* sniff = addFolder("Sniff");
-    addSubmenu(sniff, addAction("Beacon", actionPlaceholder));
-    addSubmenu(sniff, addAction("Deauth", actionPlaceholder));
-    addSubmenu(sniff, addAction("Probe", actionPlaceholder));
-    addSubmenu(sniff, addAction("EAPOL/PMKID", actionPlaceholder));
-    addSubmenu(sniff, addAction("Raw", actionPlaceholder));
-    addSubmenu(wifi, sniff);
-    
-    // List
-    MenuItem* list = addFolder("List");
-    addSubmenu(list, addAction("APs", actionPlaceholder));
-    addSubmenu(list, addAction("Stations", actionPlaceholder));
-    addSubmenu(list, addAction("SSIDs", actionPlaceholder));
-    addSubmenu(wifi, list);
-    
-    // Settings
-    MenuItem* wifiSettings = addFolder("Settings");
-    addSubmenu(wifiSettings, addAction("Channel", actionPlaceholder));
-    addSubmenu(wifiSettings, addAction("Force PMKID", actionPlaceholder));
-    addSubmenu(wifiSettings, addAction("Save PCAP", actionPlaceholder));
-    addSubmenu(wifiSettings, addAction("Clear", actionPlaceholder));
-    addSubmenu(wifi, wifiSettings);
-    
-    addSubmenu(rootMenu, wifi);
-    
-    // ========== 125 kHz RFID Menu ==========
-    MenuItem* rfid125 = addFolder("125 kHz RFID");
-    addSubmenu(rfid125, addAction("Read", actionPlaceholder));
-    addSubmenu(rfid125, addAction("Write", actionPlaceholder));
-    addSubmenu(rfid125, addAction("Emulate", actionPlaceholder));
-    addSubmenu(rfid125, addAction("Saved", actionPlaceholder));
-    addSubmenu(rootMenu, rfid125);
-    
-    // ========== 13.56 MHz NFC Menu ==========
-    MenuItem* nfc = addFolder("13.56 MHz NFC");
-    addSubmenu(nfc, addAction("Read", actionPlaceholder));
-    addSubmenu(nfc, addAction("Write", actionPlaceholder));
-    addSubmenu(nfc, addAction("Emulate", actionPlaceholder));
-    addSubmenu(nfc, addAction("Saved", actionPlaceholder));
-    addSubmenu(rootMenu, nfc);
-    
-    // ========== Other Menus ==========
-    MenuItem* ir = addFolder("Infrared");
-    addSubmenu(ir, addAction("Learn Remote", actionPlaceholder));
-    addSubmenu(ir, addAction("Saved Remotes", actionPlaceholder));
-    addSubmenu(ir, addAction("Universal Remote", actionPlaceholder));
-    addSubmenu(rootMenu, ir);
-    
-    MenuItem* badusb = addFolder("Bad USB");
-    addSubmenu(badusb, addAction("Scripts", actionPlaceholder));
-    addSubmenu(badusb, addAction("New Script", actionPlaceholder));
-    addSubmenu(badusb, addAction("Run Script", actionPlaceholder));
-    addSubmenu(rootMenu, badusb);
-    
-    MenuItem* settings = addFolder("Settings");
-    addSubmenu(settings, addAction("Display", actionPlaceholder));
-    addSubmenu(settings, addAction("Sound", actionPlaceholder));
-    addSubmenu(settings, addAction("System Info", actionPlaceholder));
-    addSubmenu(settings, addAction("About", actionPlaceholder));
-    addSubmenu(rootMenu, settings);
+    // Footer with version
+    tft->fillRect(0, 220, 320, 20, DARKGREY);
+    tft->setTextColor(BLACK);
+    tft->setTextSize(1);
+    tft->setCursor(10, 227);
+    tft->print("v1.0.0 | Made with ");
+    tft->setTextColor(RED);
+    tft->print("<3");
+    tft->setTextColor(BLACK);
+    tft->print(" by Kaden");
 }
 
-MenuItem* Menu::addFolder(const char* name) {
-    return new MenuItem(String(name), FOLDER);
+void Menu::drawHeader(String title) {
+    tft->setTextSize(1);
+    tft->setTextColor(CYAN);
+    tft->setCursor(5, 5);
+    tft->print(title);
+    tft->drawFastHLine(0, 18, 320, DARKGREY);
 }
 
-MenuItem* Menu::addAction(const char* name, void (*action)()) {
-    return new MenuItem(String(name), action);
-}
-
-void Menu::addSubmenu(MenuItem* parent, MenuItem* child) {
-    parent->children.push_back(child);
+void Menu::drawMenuItem(int index, String text, bool selected) {
+    int startY = 35;
+    int itemHeight = 36;
+    int y = startY + (index * itemHeight);
+    int leftMargin = 15;
+    
+    // Draw item background for selected
+    if (selected) {
+        tft->fillRoundRect(5, y, 310, itemHeight - 4, 8, CYAN);
+        tft->setTextColor(BLACK);
+    } else {
+        // Draw subtle border for unselected
+        tft->drawRoundRect(5, y, 310, itemHeight - 4, 8, DARKGREY);
+        tft->setTextColor(WHITE);
+    }
+    
+    tft->setTextSize(2);
+    tft->setCursor(leftMargin, y + 10);
+    tft->print(text);
 }
 
 void Menu::update() {
-    TouchPoint p = touch->getTouch();
+    TouchPoint p = touchScreen->getTouch();
     if (p.valid) {
         handleTouch(p.x, p.y);
-        delay(200);  // Debounce
+        delay(300);
     }
-}
-
-void Menu::drawMenu() {
-    tft->fillScreen(BG_COLOR);
-    drawHeader();
-    drawMenuItems();
-    drawScrollbar();
-    drawFooter();
-}
-
-void Menu::drawHeader() {
-    // Compact header with breadcrumb
-    tft->fillRect(0, 0, 320, 20, HEADER_COLOR);
-    tft->setTextColor(BLACK);
-    tft->setTextSize(1);
-    
-    // Draw breadcrumb showing full path
-    String breadcrumb = getBreadcrumb();
-    tft->setCursor(3, 6);
-    tft->print(breadcrumb);
-    
-    // Draw small arrow on right to indicate more items
-    if (currentMenu && currentMenu->children.size() > 0) {
-        tft->setCursor(305, 6);
-        tft->print("v");
-    }
-}
-
-void Menu::drawMenuItems() {
-    int itemHeight = 22;  // More compact
-    int startY = 22;
-    int visibleCount = getVisibleItemCount();
-    
-    for (int i = 0; i < visibleCount; i++) {
-        int itemIndex = scrollOffset + i;
-        if (itemIndex >= currentMenu->children.size()) break;
-        
-        MenuItem* item = currentMenu->children[itemIndex];
-        int y = startY + (i * itemHeight);
-        
-        // Draw selection
-        if (itemIndex == selectedIndex) {
-            tft->fillRect(0, y, 308, itemHeight - 1, SELECT_COLOR);
-            tft->setTextColor(BLACK);
-        } else {
-            tft->setTextColor(TEXT_COLOR);
-        }
-        
-        // Draw item text - smaller, more compact
-        tft->setTextSize(1);
-        tft->setCursor(5, y + 7);
-        
-        // Add folder icon
-        if (item->type == FOLDER) {
-            tft->print("> ");
-        } else {
-            tft->print("  ");
-        }
-        
-        tft->print(item->name);
-        
-        // Draw subtle separator line
-        if (itemIndex != selectedIndex) {
-            tft->drawFastHLine(0, y + itemHeight - 1, 308, BORDER_COLOR);
-        }
-    }
-}
-
-void Menu::drawScrollbar() {
-    if (currentMenu->children.size() <= maxVisibleItems) return;
-    
-    int scrollbarHeight = 198;  // Adjusted for new layout
-    int scrollbarY = 22;
-    int scrollbarX = 312;
-    int scrollbarWidth = 3;
-    
-    // Background
-    tft->fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight, BORDER_COLOR);
-    
-    // Calculate thumb position and size
-    float ratio = (float)maxVisibleItems / currentMenu->children.size();
-    int thumbHeight = max(8, (int)(scrollbarHeight * ratio));
-    float scrollRatio = (float)scrollOffset / (currentMenu->children.size() - maxVisibleItems);
-    int thumbY = scrollbarY + (int)((scrollbarHeight - thumbHeight) * scrollRatio);
-    
-    // Draw thumb
-    tft->fillRect(scrollbarX, thumbY, scrollbarWidth, thumbHeight, SCROLL_COLOR);
-}
-
-void Menu::drawFooter() {
-    // Split footer into two rows for more space
-    tft->fillRect(0, 220, 320, 20, HEADER_COLOR);
-    tft->setTextColor(BLACK);
-    tft->setTextSize(1);
-    
-    // Top line - Controls and Project name
-    tft->setCursor(3, 224);
-    if (navigationStack.size() > 0) {
-        tft->print("BACK");
-    }
-}
-
-String Menu::getBreadcrumb() {
-    String breadcrumb = "Main";
-    
-    // Add navigation path
-    for (int i = 0; i < navigationStack.size(); i++) {
-        breadcrumb += " > ";
-        breadcrumb += navigationStack[i]->name;
-    }
-    
-    // Add current menu if we're not at root
-    if (currentMenu != rootMenu) {
-        breadcrumb += " > ";
-        breadcrumb += currentMenu->name;
-    }
-    
-    // Truncate if too long (max ~50 chars for display)
-    if (breadcrumb.length() > 50) {
-        breadcrumb = "..." + breadcrumb.substring(breadcrumb.length() - 47);
-    }
-    
-    return breadcrumb;
-}
-
-int Menu::getVisibleItemCount() {
-    return min((int)currentMenu->children.size() - scrollOffset, maxVisibleItems);
 }
 
 void Menu::handleTouch(int x, int y) {
-    // Check for back button (footer left)
-    if (y > 220 && x < 80 && navigationStack.size() > 0) {
-        goBack();
-        return;
-    }
+    Serial.print("[TOUCH] State=");
+    Serial.print(currentState);
+    Serial.print(" X=");
+    Serial.print(x);
+    Serial.print(" Y=");
+    Serial.print(y);
     
-    // Check for menu items
-    if (y >= 22 && y < 220) {
-        int itemIndex = (y - 22) / 22 + scrollOffset;
-        if (itemIndex < currentMenu->children.size()) {
-            selectItem(itemIndex);
+    // Check for back button - MUCH LARGER AREA (bottom 50px)
+    if (y >= 190) {
+        Serial.println(" -> BACK AREA!");
+        if (currentState != MAIN_MENU) {
+            Serial.println("[MENU] Going back to main menu!");
+            goBack();
+            return;
         }
     }
+    Serial.println();
     
-    // TODO: Add scroll gesture detection
-}
-
-void Menu::selectItem(int index) {
-    selectedIndex = index;
-    MenuItem* item = currentMenu->children[index];
-    
-    Serial.print("Selected: ");
-    Serial.println(item->name);
-    
-    if (item->type == FOLDER) {
-        enterFolder(item);
-    } else if (item->action) {
-        // Execute action
-        item->action();
-        // Redraw menu after action
-        delay(100);
-        drawMenu();
+    // Main menu touch
+    if (currentState == MAIN_MENU) {
+        int startY = 35;
+        int itemHeight = 36;
+        
+        if (y < 18) return;
+        
+        int touchedItem = (y - startY) / itemHeight;
+        
+        Serial.print("[MENU] Item #");
+        Serial.println(touchedItem);
+        
+        if (touchedItem >= 0 && touchedItem <= 4) {
+            selectedIndex = touchedItem;
+            
+            switch(touchedItem) {
+                case 0: // WiFi
+                    {
+                        String items[] = {"Reconnaissance", "Attacks"};
+                        showSubmenu("< WiFi", items, 2);
+                        currentState = WIFI_SUBMENU;
+                    }
+                    break;
+                    
+                case 1: // Bluetooth
+                    {
+                        String items[] = {"Coming Soon..."};
+                        showSubmenu("< Bluetooth", items, 1);
+                        currentState = BT_SUBMENU;
+                    }
+                    break;
+                    
+                case 2: // 13.56 MHz NFC
+                    {
+                        String items[] = {"Read", "Write", "Emulate", "Saves"};
+                        showSubmenu("< 13.56 MHz NFC", items, 4);
+                        currentState = NFC_SUBMENU;
+                    }
+                    break;
+                    
+                case 3: // 125 kHz RFID
+                    {
+                        String items[] = {"Read", "Write", "Emulate", "Saves"};
+                        showSubmenu("< 125 kHz RFID", items, 4);
+                        currentState = RFID_SUBMENU;
+                    }
+                    break;
+                    
+                case 4: // WebUI
+                    if (webUI) {
+                        Serial.println("[+] Starting WebUI...");
+                        webUI->init();
+                        webUI->begin();
+                        showWebUIScreen();
+                        currentState = WEBUI_SCREEN;
+                    }
+                    break;
+            }
+        }
+    }
+    // Handle submenu touches
+    else if (currentState != WEBUI_SCREEN) {
+        int startY = 35;
+        int itemHeight = 36;
+        
+        if (y >= startY && y < 200) {
+            int touchedItem = (y - startY) / itemHeight;
+            Serial.print("[SUBMENU] Item #");
+            Serial.println(touchedItem);
+            
+            // Placeholder - would execute submenu actions here
+            tft->fillRect(0, 220, 320, 20, BLACK);
+            tft->setTextColor(GREEN);
+            tft->setTextSize(1);
+            tft->setCursor(10, 225);
+            tft->print("Selected item ");
+            tft->print(touchedItem);
+            delay(500);
+        }
     }
 }
 
-void Menu::enterFolder(MenuItem* folder) {
-    navigationStack.push_back(currentMenu);
-    currentMenu = folder;
+void Menu::showSubmenu(String title, String items[], int itemCount) {
+    tft->fillScreen(BLACK);
+    
+    // Header with back arrow
+    tft->fillRect(0, 0, 320, 25, CYAN);
+    tft->setTextColor(BLACK);
+    tft->setTextSize(2);
+    tft->setCursor(10, 6);
+    tft->print(title);
+    
     selectedIndex = 0;
-    scrollOffset = 0;
-    drawMenu();
+    
+    // Draw submenu items
+    for (int i = 0; i < itemCount && i < 5; i++) {
+        drawMenuItem(i, items[i], i == 0);
+    }
+    
+    // Draw back button
+    tft->fillRect(0, 220, 320, 20, DARKGREY);
+    tft->setTextColor(BLACK);
+    tft->setTextSize(1);
+    tft->setCursor(10, 227);
+    tft->print("< BACK TO MENU");
+}
+
+void Menu::showWebUIScreen() {
+    tft->fillScreen(BLACK);
+    
+    // Console/CLI style
+    tft->setTextSize(1);
+    tft->setTextColor(GREEN);
+    tft->setCursor(5, 5);
+    tft->println("root@borealis:~#");
+    
+    tft->setTextColor(WHITE);
+    tft->setCursor(5, 20);
+    tft->println("> Initializing WebUI...");
+    delay(300);
+    
+    tft->setCursor(5, 35);
+    tft->setTextColor(GREEN);
+    tft->println("[OK] WiFi AP Started");
+    delay(200);
+    
+    tft->setCursor(5, 50);
+    tft->setTextColor(GREEN);
+    tft->println("[OK] Web Server Running");
+    delay(200);
+    
+    // Connection details box
+    tft->drawRect(5, 70, 310, 90, CYAN);
+    
+    tft->setTextColor(CYAN);
+    tft->setCursor(15, 80);
+    tft->println("NETWORK INFORMATION");
+    
+    tft->setTextColor(WHITE);
+    tft->setCursor(15, 95);
+    tft->print("SSID: ");
+    tft->setTextColor(CYAN);
+    tft->println("Project-Borealis");
+    
+    tft->setTextColor(WHITE);
+    tft->setCursor(15, 108);
+    tft->print("Password: ");
+    tft->setTextColor(CYAN);
+    tft->println("borealis123");
+    
+    tft->setTextColor(WHITE);
+    tft->setCursor(15, 121);
+    tft->print("WebUI: ");
+    tft->setTextColor(GREEN);
+    tft->println("http://192.168.0.1");
+    
+    tft->setTextColor(YELLOW);
+    tft->setCursor(15, 140);
+    tft->println("Awaiting connection...");
+    
+    // Status indicator
+    tft->fillCircle(20, 175, 5, GREEN);
+    tft->setTextColor(GREEN);
+    tft->setCursor(35, 170);
+    tft->println("ONLINE");
+    
+    // Back button
+    tft->fillRect(0, 220, 320, 20, DARKGREY);
+    tft->setTextColor(BLACK);
+    tft->setTextSize(1);
+    tft->setCursor(10, 227);
+    tft->print("< BACK");
 }
 
 void Menu::goBack() {
-    if (navigationStack.size() > 0) {
-        currentMenu = navigationStack.back();
-        navigationStack.pop_back();
-        selectedIndex = 0;
-        scrollOffset = 0;
-        drawMenu();
-    }
-}
-
-// Placeholder action
-void Menu::actionPlaceholder() {
-    Serial.println("[!] Action not implemented yet");
+    Serial.println("[MENU] Going back...");
+    showMainMenu();
 }

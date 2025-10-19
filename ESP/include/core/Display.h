@@ -39,10 +39,12 @@ class Display {
 public:
     Display();
     void init();
+    void showBootScreen();
     Adafruit_ILI9341* getTFT();
     
 private:
     Adafruit_ILI9341 tft;
+    void drawLoadingBar(int x, int y, int width, int height, int progress);
 };
 
 #endif

@@ -1,73 +1,45 @@
 #ifndef MENU_H
 #define MENU_H
 
+#include <Arduino.h>
 #include "Display.h"
 #include "Touch.h"
-#include <vector>
 
-enum MenuItemType {
-    FOLDER,
-    ACTION
-};
+// Forward declaration
+class WebInterface;
 
-struct MenuItem {
-    String name;
-    MenuItemType type;
-    std::vector<MenuItem*> children;
-    void (*action)();  // Function pointer for actions
-    
-    MenuItem(String n, MenuItemType t) : name(n), type(t), action(nullptr) {}
-    MenuItem(String n, void (*act)()) : name(n), type(ACTION), action(act) {}
+enum MenuState {
+    MAIN_MENU,
+    WIFI_SUBMENU,
+    BT_SUBMENU,
+    NFC_SUBMENU,
+    RFID_SUBMENU,
+    ONNET_SUBMENU,
+    WEBUI_SCREEN
 };
 
 class Menu {
 public:
     Menu(Display* display, Touch* touch);
-    ~Menu();
-    
-    void start();
+    void init();
+    void setWebInterface(WebInterface* web);
+    void showMainMenu();
     void update();
     
 private:
     Display* display;
-    Touch* touch;
     Adafruit_ILI9341* tft;
-    
-    // Menu structure
-    MenuItem* rootMenu;
-    MenuItem* currentMenu;
-    std::vector<MenuItem*> navigationStack;
-    
+    Touch* touchScreen;
+    WebInterface* webUI;
     int selectedIndex;
-    int scrollOffset;
-    int maxVisibleItems;
+    MenuState currentState;
     
-    // Building menu structure
-    void buildMenuStructure();
-    MenuItem* addFolder(const char* name);
-    MenuItem* addAction(const char* name, void (*action)());
-    void addSubmenu(MenuItem* parent, MenuItem* child);
-    
-    // Drawing
-    void drawMenu();
-    void drawHeader();
-    void drawMenuItems();
-    void drawScrollbar();
-    void drawFooter();
-    
-    // Navigation
+    void drawMenuItem(int index, String text, bool selected);
+    void drawHeader(String title);
     void handleTouch(int x, int y);
-    void selectItem(int index);
+    void showSubmenu(String title, String items[], int itemCount);
+    void showWebUIScreen();
     void goBack();
-    void enterFolder(MenuItem* folder);
-    
-    // Utility
-    String getBreadcrumb();
-    int getVisibleItemCount();
-    
-    // Action handlers (placeholders for now)
-    static void actionPlaceholder();
-    static void actionBack();
 };
 
 #endif

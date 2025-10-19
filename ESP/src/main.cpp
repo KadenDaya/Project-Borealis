@@ -2,10 +2,11 @@
 #include "core/Display.h"
 #include "core/Touch.h"
 #include "core/Menu.h"
+#include "core/WebServer.h"
 
-// Initialize modules
 Display display;
 Touch touch;
+WebInterface webInterface;
 Menu menu(&display, &touch);
 
 void setup() {
@@ -20,12 +21,26 @@ void setup() {
   display.init();
   touch.init();
   
-  // Start the menu system
-  menu.start();
+  // Show boot screen
+  display.showBootScreen();
   
-  Serial.println("\n[+] System ready!");
+  // Initialize menu
+  menu.init();
+  menu.setWebInterface(&webInterface);
+  
+  // Show main menu
+  menu.showMainMenu();
+  
+  Serial.println("[+] System ready!");
+  Serial.println("[*] Touch menu items to navigate!");
 }
 
 void loop() {
+  // Handle web server
+  webInterface.update();
+  
+  // Handle menu & touch
   menu.update();
+  
+  delay(10);
 }
