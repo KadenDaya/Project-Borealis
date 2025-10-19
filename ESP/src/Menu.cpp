@@ -140,16 +140,16 @@ void Menu::handleTouch(int x, int y) {
                     
                 case 2: // 13.56 MHz NFC
                     {
-                        String items[] = {"Read", "Write", "Emulate", "Saves"};
-                        showSubmenu("< 13.56 MHz NFC", items, 4);
+                        String items[] = {"Read", "Write", "Emulate"};
+                        showSubmenu("< 13.56 MHz NFC", items, 3);
                         currentState = NFC_SUBMENU;
                     }
                     break;
                     
                 case 3: // 125 kHz RFID
                     {
-                        String items[] = {"Read", "Write", "Emulate", "Saves"};
-                        showSubmenu("< 125 kHz RFID", items, 4);
+                        String items[] = {"Read", "Write", "Emulate"};
+                        showSubmenu("< 125 kHz RFID", items, 3);
                         currentState = RFID_SUBMENU;
                     }
                     break;
